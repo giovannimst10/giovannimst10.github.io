@@ -1,8 +1,920 @@
-<DOCTYPE html>
-    <HTML>
-    <head> 
-        <body>
-            <a href="sobre.html"> ir para pagina sobre </a> 
-           </body>
-    </head>
-</HTML>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pixel Forge — Forge Your Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #0a0a0f;
+      --panel:    #10101a;
+      --border:   #1e1e30;
+      --accent:   #f5a623;
+      --accent2:  #e8395a;
+      --accent3:  #2de8b0;
+      --text:     #e8e8f0;
+      --muted:    #7070a0;
+      --glow:     0 0 18px rgba(245,166,35,.55);
+      --glow2:    0 0 18px rgba(232,57,90,.55);
+      --glow3:    0 0 18px rgba(45,232,176,.55);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 17px;
+      line-height: 1.6;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── CUSTOM CURSOR ── */
+    #cursor {
+      position: fixed; top: 0; left: 0;
+      width: 18px; height: 18px;
+      border: 2px solid var(--accent);
+      border-radius: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: transform .08s, background .15s, border-color .15s;
+      mix-blend-mode: difference;
+    }
+    #cursor.hovered { transform: translate(-50%,-50%) scale(2.2); background: rgba(245,166,35,.15); }
+
+    /* ── SCANLINE OVERLAY ── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,.06) 2px, rgba(0,0,0,.06) 4px
+      );
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 60px;
+      background: rgba(10,10,15,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      text-shadow: var(--glow);
+      letter-spacing: 1px;
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--accent2); text-shadow: var(--glow2); }
+    nav ul { display: flex; gap: 36px; list-style: none; }
+    nav ul a {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: .5px;
+      transition: color .2s;
+      position: relative;
+    }
+    nav ul a::after {
+      content: '';
+      position: absolute; bottom: -4px; left: 0; right: 0;
+      height: 1px; background: var(--accent);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform .25s;
+    }
+    nav ul a:hover { color: var(--accent); }
+    nav ul a:hover::after { transform: scaleX(1); }
+    .nav-cta {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      padding: 9px 20px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      cursor: none;
+      letter-spacing: 1px;
+      transition: background .2s, box-shadow .2s;
+      text-decoration: none;
+    }
+    .nav-cta:hover { background: rgba(245,166,35,.12); box-shadow: var(--glow); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 40px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Grid background */
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(245,166,35,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245,166,35,.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridScroll 20s linear infinite;
+    }
+    @keyframes gridScroll {
+      from { background-position: 0 0; }
+      to   { background-position: 40px 40px; }
+    }
+
+    /* Pixel particles */
+    .particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .particle {
+      position: absolute;
+      width: 4px; height: 4px;
+      background: var(--accent);
+      animation: floatUp linear infinite;
+      opacity: 0;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: .6; }
+      100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+    }
+
+    .hero-content { position: relative; z-index: 2; max-width: 800px; }
+    .hero-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--accent3);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      border: 1px solid rgba(45,232,176,.3);
+      display: inline-block;
+      padding: 5px 14px;
+      margin-bottom: 30px;
+      text-shadow: var(--glow3);
+      animation: fadeDown .6s ease both;
+    }
+    .hero-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(22px, 4vw, 46px);
+      line-height: 1.5;
+      color: #fff;
+      margin-bottom: 24px;
+      animation: fadeDown .7s .1s ease both;
+    }
+    .hero-title .line2 { color: var(--accent); text-shadow: var(--glow); display: block; }
+    .hero-sub {
+      font-size: 19px;
+      color: var(--muted);
+      max-width: 540px;
+      margin: 0 auto 40px;
+      animation: fadeDown .7s .2s ease both;
+    }
+    .hero-btns {
+      display: flex; gap: 18px; justify-content: center; flex-wrap: wrap;
+      animation: fadeDown .7s .3s ease both;
+    }
+    .btn-primary {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      padding: 14px 34px;
+      background: var(--accent);
+      color: #0a0a0f;
+      border: none;
+      cursor: none;
+      letter-spacing: 1px;
+      font-weight: 700;
+      transition: box-shadow .2s, transform .15s;
+      text-decoration: none;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+    .btn-primary:hover { box-shadow: var(--glow); transform: translateY(-2px); }
+    .btn-secondary {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      padding: 14px 34px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      cursor: none;
+      letter-spacing: 1px;
+      transition: border-color .2s, color .2s;
+      text-decoration: none;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+    .btn-secondary:hover { border-color: var(--accent3); color: var(--accent3); }
+
+    .hero-stats {
+      display: flex; gap: 50px; justify-content: center; margin-top: 60px;
+      animation: fadeDown .7s .4s ease both;
+    }
+    .stat { text-align: center; }
+    .stat-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 22px;
+      color: var(--accent);
+      text-shadow: var(--glow);
+      display: block;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SECTION BASE ── */
+    section { padding: 100px 60px; }
+    .section-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--accent3);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(14px, 2.2vw, 24px);
+      color: #fff;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+    .section-sub { font-size: 17px; color: var(--muted); max-width: 520px; }
+
+    /* ── COURSES ── */
+    #courses { background: var(--panel); }
+    .courses-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 56px; flex-wrap: wrap; gap: 20px; }
+    .courses-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+
+    .course-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .25s, transform .25s;
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+    }
+    .course-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--card-accent, var(--accent));
+      box-shadow: 0 0 14px var(--card-accent, var(--accent));
+    }
+    .course-card:hover { border-color: var(--card-accent, var(--accent)); transform: translateY(-6px); }
+
+    .course-icon {
+      font-size: 36px;
+      margin-bottom: 18px;
+      display: block;
+    }
+    .course-level {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--card-accent, var(--accent));
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .course-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      color: #fff;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+    .course-desc { font-size: 15px; color: var(--muted); margin-bottom: 24px; line-height: 1.55; }
+    .course-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 22px; }
+    .course-meta span {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .course-price {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 16px;
+      color: var(--card-accent, var(--accent));
+    }
+    .course-price small { font-size: 10px; color: var(--muted); font-family: 'Share Tech Mono'; }
+
+    /* ── FEATURES ── */
+    #features { position: relative; overflow: hidden; }
+    #features::before {
+      content: '';
+      position: absolute; top: -200px; right: -200px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(232,57,90,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .features-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+    @media (max-width: 800px) { .features-wrap { grid-template-columns: 1fr; } }
+    .features-list { display: flex; flex-direction: column; gap: 28px; margin-top: 40px; }
+    .feat-item {
+      display: flex; gap: 20px; align-items: flex-start;
+      padding: 20px;
+      border: 1px solid transparent;
+      transition: border-color .2s, background .2s;
+    }
+    .feat-item:hover { border-color: var(--border); background: rgba(255,255,255,.02); }
+    .feat-icon {
+      width: 48px; height: 48px; flex-shrink: 0;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      background: var(--panel);
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    }
+    .feat-title { font-weight: 700; font-size: 18px; color: #fff; margin-bottom: 5px; }
+    .feat-desc { font-size: 15px; color: var(--muted); }
+
+    /* Terminal window */
+    .terminal {
+      background: #050508;
+      border: 1px solid var(--border);
+      border-radius: 0;
+      overflow: hidden;
+      font-family: 'Share Tech Mono', monospace;
+    }
+    .terminal-bar {
+      background: var(--panel);
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dot-r { background: var(--accent2); }
+    .dot-y { background: var(--accent); }
+    .dot-g { background: var(--accent3); }
+    .terminal-body { padding: 24px; font-size: 13px; line-height: 2; }
+    .t-prompt { color: var(--accent3); }
+    .t-cmd   { color: #fff; }
+    .t-out   { color: var(--muted); }
+    .t-hi    { color: var(--accent); }
+    .t-hi2   { color: var(--accent2); }
+    .t-hi3   { color: var(--accent3); }
+    .t-cursor {
+      display: inline-block; width: 9px; height: 1em;
+      background: var(--accent);
+      animation: blink .8s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── TESTIMONIALS ── */
+    #testimonials { background: var(--panel); }
+    .testi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 56px; }
+    .testi-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 28px;
+      position: relative;
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+    }
+    .testi-quote {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 28px;
+      color: var(--accent);
+      opacity: .35;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .testi-text { font-size: 15px; color: var(--muted); margin-bottom: 22px; line-height: 1.65; }
+    .testi-user { display: flex; align-items: center; gap: 12px; }
+    .testi-avatar {
+      width: 42px; height: 42px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    }
+    .testi-name { font-weight: 700; color: #fff; font-size: 15px; }
+    .testi-role { font-size: 12px; color: var(--muted); font-family: 'Share Tech Mono', monospace; }
+    .stars { color: var(--accent); font-size: 12px; margin-bottom: 6px; }
+
+    /* ── CTA BANNER ── */
+    #cta {
+      text-align: center;
+      padding: 100px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    #cta::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 60% at 50% 50%, rgba(245,166,35,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    #cta .section-title { margin-bottom: 20px; }
+    #cta .section-sub { margin: 0 auto 40px; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding: 60px 60px 36px;
+    }
+    .footer-top { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 50px; margin-bottom: 48px; }
+    @media (max-width: 850px) { .footer-top { grid-template-columns: 1fr 1fr; } }
+    .footer-brand p { font-size: 14px; color: var(--muted); margin-top: 14px; max-width: 240px; line-height: 1.7; }
+    .footer-col h4 {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-col ul a {
+      font-size: 15px; color: var(--muted); text-decoration: none;
+      transition: color .2s;
+    }
+    .footer-col ul a:hover { color: var(--accent); }
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .footer-bottom p { font-size: 13px; color: var(--muted); font-family: 'Share Tech Mono', monospace; }
+    .socials { display: flex; gap: 14px; }
+    .socials a {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; color: var(--muted);
+      text-decoration: none;
+      transition: border-color .2s, color .2s;
+    }
+    .socials a:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity .6s, transform .6s; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      nav { padding: 14px 24px; }
+      nav ul { display: none; }
+      section { padding: 70px 24px; }
+      footer { padding: 50px 24px 28px; }
+      .hero-stats { gap: 28px; }
+      #cta { padding: 70px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div id="cursor"></div>
+
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">PIXEL<span>FORGE</span></a>
+  <ul>
+    <li><a href="#courses">Cursos</a></li>
+    <li><a href="#features">Por Que Nós</a></li>
+    <li><a href="#testimonials">Alunos</a></li>
+    <li><a href="#cta">Contato</a></li>
+  </ul>
+  <a href="#courses" class="nav-cta">▶ COMEÇAR</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-content">
+    <span class="hero-tag">// LEVEL UP YOUR SKILLS</span>
+    <h1 class="hero-title">
+      APRENDA A CRIAR
+      <span class="line2">SEUS PRÓPRIOS GAMES</span>
+    </h1>
+    <p class="hero-sub">Da ideia ao executável — cursos práticos de desenvolvimento de jogos para quem quer sair do zero e lançar de verdade.</p>
+    <div class="hero-btns">
+      <a href="#courses" class="btn-primary">VER CURSOS</a>
+      <a href="#features" class="btn-secondary">COMO FUNCIONA</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num" data-target="4200">0</span>
+        <span class="stat-label">Alunos</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" data-target="18">0</span>
+        <span class="stat-label">Cursos</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" data-target="97">0</span>
+        <span class="stat-label">% Satisfação</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" data-target="320">0</span>
+        <span class="stat-label">Games Lançados</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COURSES -->
+<section id="courses">
+  <div class="courses-header reveal">
+    <div>
+      <p class="section-label">// TRILHAS DE APRENDIZADO</p>
+      <h2 class="section-title">ESCOLHA SEU<br>CAMINHO</h2>
+    </div>
+    <a href="#" class="btn-secondary">VER TODOS OS CURSOS →</a>
+  </div>
+
+  <div class="courses-grid">
+
+    <div class="course-card reveal" style="--card-accent: #f5a623;">
+      <span class="course-icon">🕹️</span>
+      <p class="course-level">▮ Iniciante</p>
+      <h3 class="course-name">Game Dev do Zero com Unity</h3>
+      <p class="course-desc">Aprenda C# e Unity criando 5 jogos completos — plataforma, puzzle, shooter e mais.</p>
+      <div class="course-meta">
+        <span>⏱ 48h</span>
+        <span>📂 5 projetos</span>
+        <span>🎓 Certificado</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="course-price">R$ 197 <small>/ acesso vitalício</small></div>
+        <a href="#" class="btn-primary" style="padding:10px 18px; font-size:11px;">COMPRAR</a>
+      </div>
+    </div>
+
+    <div class="course-card reveal" style="--card-accent: #e8395a; transition-delay:.1s">
+      <span class="course-icon">🔥</span>
+      <p class="course-level">▮▮ Intermediário</p>
+      <h3 class="course-name">Godot 4 — RPG Completo</h3>
+      <p class="course-desc">Construa um RPG com mapas, inventário, batalha por turnos e saves usando GDScript.</p>
+      <div class="course-meta">
+        <span>⏱ 62h</span>
+        <span>📂 1 projeto grande</span>
+        <span>🎓 Certificado</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="course-price" style="color:var(--accent2);">R$ 247 <small>/ acesso vitalício</small></div>
+        <a href="#" class="btn-primary" style="padding:10px 18px; font-size:11px; background:var(--accent2);">COMPRAR</a>
+      </div>
+    </div>
+
+    <div class="course-card reveal" style="--card-accent: #2de8b0; transition-delay:.2s">
+      <span class="course-icon">🌐</span>
+      <p class="course-level">▮ Iniciante</p>
+      <h3 class="course-name">Games 2D no Browser com JS</h3>
+      <p class="course-desc">Crie jogos direto no navegador com JavaScript puro e Canvas API, sem engines.</p>
+      <div class="course-meta">
+        <span>⏱ 30h</span>
+        <span>📂 4 projetos</span>
+        <span>🎓 Certificado</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="course-price" style="color:var(--accent3);">R$ 149 <small>/ acesso vitalício</small></div>
+        <a href="#" class="btn-primary" style="padding:10px 18px; font-size:11px; background:var(--accent3); color:#0a0a0f;">COMPRAR</a>
+      </div>
+    </div>
+
+    <div class="course-card reveal" style="--card-accent: #a78bfa; transition-delay:.3s">
+      <span class="course-icon">💻</span>
+      <p class="course-level">▮▮▮ Avançado</p>
+      <h3 class="course-name">Unreal Engine 5 — FPS AAA</h3>
+      <p class="course-desc">Blueprints + C++, iluminação Lumen, física avançada e publicação na Steam.</p>
+      <div class="course-meta">
+        <span>⏱ 90h</span>
+        <span>📂 1 FPS completo</span>
+        <span>🎓 Certificado</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="course-price" style="color:#a78bfa;">R$ 397 <small>/ acesso vitalício</small></div>
+        <a href="#" class="btn-primary" style="padding:10px 18px; font-size:11px; background:#a78bfa;">COMPRAR</a>
+      </div>
+    </div>
+
+    <div class="course-card reveal" style="--card-accent: #38bdf8; transition-delay:.4s">
+      <span class="course-icon">🎵</span>
+      <p class="course-level">▮ Iniciante</p>
+      <h3 class="course-name">Sound Design para Games</h3>
+      <p class="course-desc">Crie trilhas, efeitos sonoros e integre com FMOD em Unity e Godot.</p>
+      <div class="course-meta">
+        <span>⏱ 22h</span>
+        <span>📂 3 projetos</span>
+        <span>🎓 Certificado</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="course-price" style="color:#38bdf8;">R$ 127 <small>/ acesso vitalício</small></div>
+        <a href="#" class="btn-primary" style="padding:10px 18px; font-size:11px; background:#38bdf8;">COMPRAR</a>
+      </div>
+    </div>
+
+    <div class="course-card reveal" style="--card-accent: #fb923c; transition-delay:.5s">
+      <span class="course-icon">🎨</span>
+      <p class="course-level">▮ Iniciante</p>
+      <h3 class="course-name">Pixel Art & Animação 2D</h3>
+      <p class="course-desc">Sprites, tilesets e animações frame-a-frame para games usando Aseprite.</p>
+      <div class="course-meta">
+        <span>⏱ 28h</span>
+        <span>📂 6 assets packs</span>
+        <span>🎓 Certificado</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="course-price" style="color:#fb923c;">R$ 167 <small>/ acesso vitalício</small></div>
+        <a href="#" class="btn-primary" style="padding:10px 18px; font-size:11px; background:#fb923c;">COMPRAR</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="features-wrap">
+    <div>
+      <p class="section-label reveal">// POR QUE PIXEL FORGE</p>
+      <h2 class="section-title reveal">METODOLOGIA<br>FEITA POR<br>DEVS REAIS</h2>
+      <p class="section-sub reveal">Sem enrolação. Cada módulo foi construído por desenvolvedores que já lançaram jogos no mercado.</p>
+      <div class="features-list">
+        <div class="feat-item reveal">
+          <div class="feat-icon">⚡</div>
+          <div>
+            <p class="feat-title">Aprenda Fazendo</p>
+            <p class="feat-desc">100% orientado a projetos. Você sai de cada módulo com código funcionando.</p>
+          </div>
+        </div>
+        <div class="feat-item reveal">
+          <div class="feat-icon">🏆</div>
+          <div>
+            <p class="feat-title">Game Jams Mensais</p>
+            <p class="feat-desc">Competições internas para praticar, fazer networking e montar portfólio.</p>
+          </div>
+        </div>
+        <div class="feat-item reveal">
+          <div class="feat-icon">🤝</div>
+          <div>
+            <p class="feat-title">Comunidade Ativa</p>
+            <p class="feat-desc">Discord exclusivo com +4.000 alunos, mentores e feedback de código.</p>
+          </div>
+        </div>
+        <div class="feat-item reveal">
+          <div class="feat-icon">♾️</div>
+          <div>
+            <p class="feat-title">Acesso Vitalício</p>
+            <p class="feat-desc">Pague uma vez, acesse para sempre — incluindo atualizações futuras.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="terminal reveal">
+      <div class="terminal-bar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+        <span style="font-size:11px; color:var(--muted); margin-left:8px; font-family:'Share Tech Mono'">pixel-forge ~ terminal</span>
+      </div>
+      <div class="terminal-body" id="terminal-body">
+        <div><span class="t-prompt">student@pixelforge:~$</span> <span class="t-cmd">pf enroll unity-zero</span></div>
+        <div class="t-out">Verificando licença...</div>
+        <div class="t-out">Instalando Unity 2023 LTS...</div>
+        <div><span class="t-hi">✔</span> <span class="t-out">Ambiente configurado!</span></div>
+        <br>
+        <div><span class="t-prompt">student@pixelforge:~$</span> <span class="t-cmd">pf run lesson 01</span></div>
+        <div class="t-out">Carregando: <span class="t-hi">Intro ao Game Loop</span></div>
+        <div class="t-out">Progresso: <span class="t-hi3">████████░░ 80%</span></div>
+        <br>
+        <div><span class="t-prompt">student@pixelforge:~$</span> <span class="t-cmd">pf build my-first-game</span></div>
+        <div class="t-out">Compilando cenas...</div>
+        <div class="t-out">Build: <span class="t-hi2">SUCCESS</span> &nbsp;| <span class="t-hi">WebGL</span> + <span class="t-hi">Windows</span></div>
+        <div class="t-out">🎮 Seu jogo está pronto!</div>
+        <br>
+        <div><span class="t-prompt">student@pixelforge:~$</span> <span class="t-cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <p class="section-label reveal">// QUEM JÁ PASSOU POR AQUI</p>
+  <h2 class="section-title reveal">ALUNOS QUE<br>VIRARAM DEVS</h2>
+  <div class="testi-grid">
+
+    <div class="testi-card reveal">
+      <div class="testi-quote">"</div>
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">Em 3 meses terminei o curso de Unity e já lancei meu primeiro jogo no itch.io. A metodologia prática faz toda a diferença.</p>
+      <div class="testi-user">
+        <div class="testi-avatar">🐱</div>
+        <div>
+          <p class="testi-name">Lucas Martins</p>
+          <p class="testi-role">Unity Developer · SP</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="testi-card reveal" style="transition-delay:.1s">
+      <div class="testi-quote">"</div>
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">O curso de Pixel Art mudou minha vida. Hoje faço freelance de sprites e trabalho como artista em um estúdio indie.</p>
+      <div class="testi-user">
+        <div class="testi-avatar">🦊</div>
+        <div>
+          <p class="testi-name">Ana Souza</p>
+          <p class="testi-role">Pixel Artist · RJ</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="testi-card reveal" style="transition-delay:.2s">
+      <div class="testi-quote">"</div>
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">Fui de total iniciante ao Unreal em 6 meses. O suporte da comunidade no Discord é absurdamente bom.</p>
+      <div class="testi-user">
+        <div class="testi-avatar">🐺</div>
+        <div>
+          <p class="testi-name">Gabriel Costa</p>
+          <p class="testi-role">Unreal Dev · MG</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="testi-card reveal" style="transition-delay:.3s">
+      <div class="testi-quote">"</div>
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">Participei de 4 game jams da Pixel Forge. Cada uma me fez crescer mais do que semanas estudando sozinha.</p>
+      <div class="testi-user">
+        <div class="testi-avatar">🐉</div>
+        <div>
+          <p class="testi-name">Carla Ferreira</p>
+          <p class="testi-role">Game Designer · RS</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <p class="section-label">// PRONTO PARA COMEÇAR?</p>
+  <h2 class="section-title reveal">SEU JOGO COMEÇA<br>AQUI.</h2>
+  <p class="section-sub reveal">Junte-se a mais de 4.000 alunos que já estão forjando seus próprios mundos.</p>
+  <div class="hero-btns reveal">
+    <a href="#courses" class="btn-primary">VER CURSOS AGORA</a>
+    <a href="#" class="btn-secondary">FALAR COM UM MENTOR</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a href="#" class="nav-logo" style="font-size:12px">PIXEL<span>FORGE</span></a>
+      <p>Escola online de desenvolvimento de games. Aprenda, crie e lance seus projetos com quem já fez isso de verdade.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Cursos</h4>
+      <ul>
+        <li><a href="#">Unity 2D/3D</a></li>
+        <li><a href="#">Godot 4</a></li>
+        <li><a href="#">Unreal Engine 5</a></li>
+        <li><a href="#">JavaScript Games</a></li>
+        <li><a href="#">Pixel Art</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Empresa</h4>
+      <ul>
+        <li><a href="#">Sobre nós</a></li>
+        <li><a href="#">Instrutores</a></li>
+        <li><a href="#">Game Jams</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Afiliados</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Suporte</h4>
+      <ul>
+        <li><a href="#">FAQ</a></li>
+        <li><a href="#">Comunidade</a></li>
+        <li><a href="#">Contato</a></li>
+        <li><a href="#">Termos de uso</a></li>
+        <li><a href="#">Privacidade</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 Pixel Forge Ltda. — Todos os direitos reservados.</p>
+    <div class="socials">
+      <a href="#" title="Discord">⚡</a>
+      <a href="#" title="YouTube">▶</a>
+      <a href="#" title="Instagram">◈</a>
+      <a href="#" title="Twitter/X">✕</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // --- Cursor ---
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top  = e.clientY + 'px';
+  });
+  document.querySelectorAll('a, button, .course-card, .feat-item').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+  });
+
+  // --- Particles ---
+  const container = document.getElementById('particles');
+  const colors = ['#f5a623','#e8395a','#2de8b0','#a78bfa','#38bdf8'];
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.classList.add('particle');
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = (8 + Math.random() * 14) + 's';
+    p.style.animationDelay   = (Math.random() * 12) + 's';
+    p.style.width = p.style.height = (3 + Math.random() * 5) + 'px';
+    container.appendChild(p);
+  }
+
+  // --- Counter Animation ---
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.target);
+    const duration = 1800;
+    const step = target / (duration / 16);
+    let current = 0;
+    const t = setInterval(() => {
+      current = Math.min(current + step, target);
+      el.textContent = Math.floor(current).toLocaleString('pt-BR');
+      if (current >= target) clearInterval(t);
+    }, 16);
+  }
+
+  // --- Scroll Reveal + Counter trigger ---
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Counter on hero visibility
+  const statNums = document.querySelectorAll('.stat-num[data-target]');
+  const heroObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        statNums.forEach(animateCounter);
+        heroObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.5 });
+  heroObserver.observe(document.getElementById('hero'));
+
+  // --- Nav active highlight on scroll ---
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav ul a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#' + current ? 'var(--accent)' : '';
+    });
+  }, { passive: true });
+</script>
+</body>
+</html>
